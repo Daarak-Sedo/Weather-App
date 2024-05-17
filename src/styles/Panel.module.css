@@ -1,0 +1,104 @@
+.panel {
+  min-height: 100vh;
+  background-color: var(--secondary-color);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+}
+.topRight {
+  display: flex;
+}
+.github {
+  margin-left: 1rem;
+  width: 2rem;
+  height: 100%;
+  display: inline-block;
+  color: var(--primary-text);
+}
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  flex: 1;
+}
+.textButton {
+  border: none;
+  background: none;
+  height: fit-content;
+  padding: 0;
+  cursor: pointer;
+}
+.forecast {
+  margin-top: 2rem;
+}
+.forecastButtons {
+  display: flex;
+  gap: 2rem;
+}
+.forecastButtons > button {
+  color: var(--secondary-text);
+  font-size: 1.2rem;
+}
+.forecastButtons > .activeButton {
+  color: var(--primary-text);
+}
+.days {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-top: 1.2rem;
+  max-width: 100vw;
+  overflow: hidden;
+  overflow-x: scroll;
+  scrollbar-width: none;
+}
+.days::-webkit-scrollbar {
+  display: none;
+}
+.hours {
+  display: flex;
+  gap: 0.8rem;
+  max-width: 100vw;
+  margin-top: 1.2rem;
+  overflow-x: scroll;
+  scrollbar-width: none;
+}
+.hours::-webkit-scrollbar {
+  display: none;
+}
+.detail h2 {
+  color: var(--primary-text);
+  font-size: 1.2rem;
+}
+.widgets {
+  margin-top: 1.2rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(12rem, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 1rem;
+}
+@media only screen and (max-width: 1200px) {
+  .top {
+    flex-direction: column-reverse;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .widgets {
+    grid-template-columns: repeat(2, minmax(9rem, 1fr));
+  }
+  .forecast {
+    margin-top: 0;
+  }
+  .forecastButtons button {
+    flex: 1;
+  }
+  .detail {
+    margin-top: 1.5rem;
+  }
+}

@@ -1,0 +1,61 @@
+.container {
+  position: relative;
+  display: block;
+  height: 2rem;
+  width: 20rem;
+}
+.container > svg,
+.locate {
+  position: absolute;
+  z-index: 9;
+  height: 100%;
+}
+.container > svg {
+  left: 1rem;
+  color: #a5a5a5;
+}
+.locate {
+  padding: 0;
+  right: 0.6rem;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.locate > svg {
+  font-size: 1.2rem;
+}
+.input {
+  outline: none;
+  border: none;
+  border-radius: 0.6rem;
+  height: 2rem;
+  width: 100%;
+  padding: 0 2.5rem;
+}
+.input:focus {
+  filter: drop-shadow(0 0 0.15rem #c1c1c1);
+}
+.input::placeholder {
+  color: #a5a5a5;
+}
+
+@media only screen and (max-width: 1200px) {
+  .container {
+    height: 4rem;
+    width: 100%;
+  }
+  .container svg,
+  .locate button {
+    font-size: 1.5rem;
+  }
+  .container .input {
+    height: 4rem;
+    padding-left: 3rem;
+    font-size: 1.2rem;
+  }
+  .container .input::placeholder {
+    font-size: 1.2rem;
+  }
+}

@@ -1,118 +1,138 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
+import Head from "next/head";
+import styles from "@/styles/Home.module.css";
+import Header from "@/components/Header";
+import Panel from "@/components/Panel";
+import { getWeatherData } from "@/api/weather";
+import { DailyData, HourlyData, ScaleType } from "@/types/temperature";
+import { getCurrentDateTime } from "@/api/date";
+import { useEffect, useRef, useState } from "react";
+import { MyContext } from "@/api/context";
+import { Location, defaultLocation } from "@/types/location";
+import { parseCookies, setCookie } from "nookies";
+import { NextPageContext } from "next";
+import { reverseGeocoding } from "@/api/geocoding";
+import Loading from "@/components/Loading";
 
-const inter = Inter({ subsets: ["latin"] });
+interface HomeProps {
+  initialData: {
+    hourlyData: HourlyData;
+    dailyData: DailyData;
+  };
+  initialLocation: Location;
+  initialScale: ScaleType;
+}
+export default function Home({
+  initialData,
+  initialLocation,
+  initialScale,
+}: HomeProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [location, setLocation] = useState(initialLocation);
+  const [weatherData, setWeatherData] = useState(initialData);
 
-export default function Home() {
+  const currentData = getCurrentWeather(initialData.hourlyData);
+  const [currentWeather, setCurrentWeather] = useState(currentData);
+
+  const locationRef = useRef(location.place_id);
+  useEffect(() => {
+    const prevLocationId = locationRef.current;
+    if (prevLocationId === location.place_id) return;
+
+    const strLocation = JSON.stringify(location);
+    setCookie(null, "location", strLocation);
+    fetchData();
+    locationRef.current = location.place_id;
+  }, [location]);
+
+  const [scale, setScale] = useState<ScaleType>(initialScale);
+  const scaleRef = useRef(scale);
+  useEffect(() => {
+    const prevScale = scaleRef.current;
+    if (prevScale === scale) return;
+
+    setCookie(null, "scale", scale);
+    fetchData();
+    scaleRef.current = scale;
+  }, [scale]);
+
+  async function fetchData() {
+    setIsLoading(true);
+    try {
+      const fetchedData = await getWeatherData(location, scale);
+      const currentData = getCurrentWeather(fetchedData.hourlyData);
+      setWeatherData(fetchedData);
+      setCurrentWeather(currentData);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function locate() {
+    navigator.geolocation.getCurrentPosition(
+      loc => getPosition(loc.coords),
+      error => {
+        console.error(error);
+        alert(error.message);
+      }
+    );
+  }
+  type CoordsType = { latitude: number; longitude: number };
+  async function getPosition(coords: CoordsType) {
+    const location = await reverseGeocoding(coords.latitude, coords.longitude);
+    setLocation(location);
+  }
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <>
+      <Head>
+        <title>Weather App</title>
+        <meta name="description" content="A weather app" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <MyContext.Provider
+        value={{ location, setLocation, scale, setScale, locate }}
+      >
+        <div className={styles.main}>
+          <Header currentWeather={currentWeather} />
+          <Panel
+            hourlyData={weatherData.hourlyData}
+            dailyData={weatherData.dailyData}
+          />
         </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+        {isLoading && <Loading />}
+      </MyContext.Provider>
+    </>
   );
+}
+
+function getCurrentWeather(data: HourlyData) {
+  const currentDateTime = getCurrentDateTime();
+  const currentIndex = data.time.findIndex(time => time === currentDateTime);
+  const currentWeather = {
+    weatherCode: data.weathercode[currentIndex],
+    temperature: data.temperature_2m[currentIndex],
+    apparentTemperature: data.apparent_temperature[currentIndex],
+    humidity: data.relativehumidity_2m[currentIndex],
+    visibility: data.visibility[currentIndex],
+    windSpeed: data.windspeed_10m[currentIndex],
+  };
+  return currentWeather;
+}
+
+export async function getServerSideProps(
+  context: Pick<NextPageContext, "req">
+) {
+  const cookies = parseCookies(context);
+
+  let initialLocation = defaultLocation;
+  const storedLocation = cookies.location;
+  if (storedLocation) initialLocation = JSON.parse(storedLocation);
+
+  let initialScale: ScaleType = "celsius";
+  const storedScale = cookies.scale as ScaleType;
+  if (storedScale) initialScale = storedScale;
+
+  const initialData = await getWeatherData(initialLocation, initialScale);
+  return { props: { initialData, initialLocation, initialScale } };
 }
